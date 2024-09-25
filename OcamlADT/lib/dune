@@ -10,11 +10,7 @@
   (backend bisect_ppx)))
 
 (library
- (name tests)
- (modules tests)
- (libraries lambda_lib)
- (preprocess
-  (pps ppx_expect ppx_deriving.show))
- (instrumentation
-  (backend bisect_ppx))
- (inline_tests))
+ (name ocamladt_lib)
+ (public_name OcamlADT.Lib)
+ (preprocess (pps ppx_deriving)))
+ ; lib for deriving annotations ;
