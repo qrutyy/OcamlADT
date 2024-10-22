@@ -123,7 +123,7 @@ let pifexpr pexpr =
   (option None (token "else" *> pass_ws *> pexpr >>| fun x -> Some x))
 
 let papplyexpr pexpr =
-  lift2 (fun fexpr sexpr -> Exp_apply(fexpr, sexpr)) pexpr pexpr
+  lift2 (fun fexpr sexpr -> Exp_apply(fexpr, sexpr)) pexpr (pass_ws *> pexpr)
 ;;
 
 let pfunexpr pexpr = 
