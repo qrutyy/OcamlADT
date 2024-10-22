@@ -170,6 +170,7 @@ let pexpr = fix (fun expr ->
     debug_parser "constint" pconstintexpr;
     debug_parser "constchar" pconstcharexpr;
     debug_parser "conststring" pconststringexpr;
+    debug_parser "ident" pidentexpr;
   ] in
   let expr = debug_parser "apply" (papplyexpr expr) <|> expr in
   let expr = debug_parser "mul_div" (lchain expr (pmul <|> pdiv)) in
