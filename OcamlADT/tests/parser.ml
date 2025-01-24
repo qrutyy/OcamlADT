@@ -1034,8 +1034,8 @@ let%expect_test "_" =
       ] |}]
 ;;
 
-let%expect_test "keyword" =
-  test_program {|(Kakadu_52) (fun x -> x);;|};
+let%expect_test "not keyword" =
+  test_programm {|(Kakadu_52) (fun x -> x);;|};
   [%expect
     {|
     [(Str_eval
@@ -1044,6 +1044,93 @@ let%expect_test "keyword" =
       ] |}]
 ;;
 
+let%expect_test "adt v0" =
+  test_programm {|type shape = Circle;;|};
+  [%expect {| [(Str_adt ([], "shape", (("Circle", []), [])))] |}]
+;;
+
+let%expect_test "adt v1" =
+  test_programm {|type shape = Circle | Square of int;;|};
+  [%expect
+    {|
+    [(Str_adt ([], "shape",
+        (("Circle", []), [("Square", [(Type_construct ("int", []))])])))
+      ] |}]
+;;
+
+let%expect_test "adt v2" =
+  test_programm {|type shape = Circle | Square;;|};
+  [%expect {|
+    [(Str_adt ([], "shape", (("Circle", []), [("Square", [])])))] |}]
+;;
+
+let%expect_test "adt v3" =
+  test_programm {|type shape = Circle | Square of int * int;;|};
+  [%expect
+    {|
+    [(Str_adt ([], "shape",
+        (("Circle", []),
+         [("Square", [(Type_construct ("int", [])); (Type_construct ("int", []))])
+           ])
+        ))
+      ] |}]
+;;
+
+let%expect_test "adt with poly" =
+  test_programm {|type 'a shape = Circle | Square of 'a * 'a ;;|};
+  [%expect
+    {|
+    [(Str_adt (["a"], "shape",
+        (("Circle", []), [("Square", [(Type_var "a"); (Type_var "a")])])))
+      ] |}]
+;;
+
+let%expect_test "bad adt with poly (wrong types)" =
+  test_programm {|type 'a shape = Circle | Square of 'b;;|};
+  [%expect
+    {|
+    [(Str_adt (["a"], "shape", (("Circle", []), [("Square", [(Type_var "b")])])))
+      ] |}]
+;;
+
+let%expect_test "adt with poly (not poly in variant)" =
+  test_programm {|type 'a shape = Circle | Square of int;;|};
+  [%expect
+    {|
+    [(Str_adt (["a"], "shape",
+        (("Circle", []), [("Square", [(Type_construct ("int", []))])])))
+      ] |}]
+;;
+
+let%expect_test "adt with poly v.easy" =
+  test_programm {|type 'a shape = Circle;;|};
+  [%expect {| [(Str_adt (["a"], "shape", (("Circle", []), [])))] |}]
+;;
+
+let%expect_test "adt with multiple poly v1" =
+  test_programm {|type ('a, 'b) shape = Circle | Square of 'a;;|};
+  [%expect
+    {|
+    [(Str_adt (["a"; "b"], "shape",
+        (("Circle", []), [("Square", [(Type_var "a")])])))
+      ] |}]
+;;
+
+let%expect_test "adt with multiple poly v2" =
+  test_programm {|type ('a, 'b) shape = Circle | Square of ('a,'b) shape;;|};
+  [%expect
+    {|
+    [(Str_adt (["a"; "b"], "shape",
+        (("Circle", []),
+         [("Square",
+           [(Type_construct ("shape", [(Type_var "a"); (Type_var "b")]))])])
+        ))
+      ] |}]
+;;
+
+let%expect_test "adt with poly (con poly variant)" =
+  test_programm {|type 'a shape = Circle | Square of (int * int) shape;;|};
+=======
 let%expect_test "print_endline as an arg" =
   test_program {|let f = print_endline in 
 f "Hello";;|};
@@ -1134,10 +1221,102 @@ else print_endline "<= 5";;
 
   (Failure ": end_of_input")
   Raised at Stdlib.failwith in file "stdlib.ml", line 29, characters 17-33
-  Called from Ocamladt_tests__Parser.test_program in file "tests/parser.ml", line 9, characters 51-66
-  Called from Ocamladt_tests__Parser.(fun) in file "tests/parser.ml", line 1123, characters 2-103
+  Called from Ocamladt_tests__Parser.test_programm in file "tests/parser.ml", line 9, characters 52-67
+  Called from Ocamladt_tests__Parser.(fun) in file "tests/parser.ml", line 1132, characters 2-74
   Called from Expect_test_collector.Make.Instance_io.exec in file "collector/expect_test_collector.ml", line 234, characters 12-19 |}]
 ;;
+
+let%expect_test "adt with tuple in variant" =
+  test_programm {|type shape = Circle | Square of int * int ;;|};
+  [%expect
+    {|
+    [(Str_adt ([], "shape",
+        (("Circle", []),
+         [("Square", [(Type_construct ("int", [])); (Type_construct ("int", []))])
+           ])
+        ))
+      ] |}]
+;;
+
+let%expect_test "adt with recursive poly variant" =
+  test_programm {|type ('a, 'b) shape = Circle | Square of 'a shape;;|};
+  [%expect
+    {|
+    [(Str_adt (["a"; "b"], "shape",
+        (("Circle", []),
+         [("Square", [(Type_construct ("shape", [(Type_var "a")]))])])
+        ))
+      ] |}]
+;;
+
+let%expect_test "adt list" =
+  test_programm {|
+type 'a my_list = Nil | Cons of 'a * 'a my_list;;
+|};
+  [%expect
+    {|
+    [(Str_adt (["a"], "my_list",
+        (("Nil", []),
+         [("Cons",
+           [(Type_var "a"); (Type_construct ("my_list", [(Type_var "a")]))])])
+        ))
+      ] |}]
+;;
+
+let%expect_test "adt list" =
+  test_programm
+    {|
+type 'a nested_list = Nil | Cons of 'a * 'a nested_list 
+| List of 'a nested_list nested_list;;
+
+|};
+  [%expect.unreachable]
+[@@expect.uncaught_exn
+  {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Failure ": end_of_input")
+  Raised at Stdlib.failwith in file "stdlib.ml", line 29, characters 17-33
+  Called from Ocamladt_tests__Parser.test_programm in file "tests/parser.ml", line 9, characters 52-67
+  Called from Ocamladt_tests__Parser.(fun) in file "tests/parser.ml", line 1184, characters 2-122
+  Called from Expect_test_collector.Make.Instance_io.exec in file "collector/expect_test_collector.ml", line 234, characters 12-19 |}]
+;;
+
+let%expect_test "adt list with pair" =
+  test_programm
+    {| type ('a, 'b) pair_list = Nil 
+    | Cons of ('a * 'b) * ('a, 'b) pair_list;;
+|};
+  [%expect.unreachable]
+[@@expect.uncaught_exn
+  {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Failure ": end_of_input")
+  Raised at Stdlib.failwith in file "stdlib.ml", line 29, characters 17-33
+  Called from Ocamladt_tests__Parser.test_programm in file "tests/parser.ml", line 9, characters 52-67
+  Called from Ocamladt_tests__Parser.(fun) in file "tests/parser.ml", line 1205, characters 2-103
+  Called from Expect_test_collector.Make.Instance_io.exec in file "collector/expect_test_collector.ml", line 234, characters 12-19 |}]
+;;
+
+let%expect_test "adt list with 2 el in node" =
+  test_programm
+    {| type ('a, 'b) pair_list = Nil 
+    | Cons of 'a * 'b * ('a, 'b) pair_list;;
+|};
+  [%expect
+    {|
+    [(Str_adt (["a"; "b"], "pair_list",
+        (("Nil", []),
+         [("Cons",
+           [(Type_var "a"); (Type_var "b");
+             (Type_construct ("pair_list", [(Type_var "a"); (Type_var "b")]))])
+           ])
+        ))
 
 let%expect_test "if then case" =
   test_program
