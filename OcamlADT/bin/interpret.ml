@@ -4,8 +4,6 @@
 
 open Ocamladt_lib.Ast
 open Ocamladt_lib.Parser
-open Ocamladt_lib.Interpreter
-open Ocamladt_lib.Interpreter.PPrinter
 open Ocamladt_lib.Infer
 open Ocamladt_lib.InferTypes
 open Format
