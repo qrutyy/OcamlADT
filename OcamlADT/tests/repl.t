@@ -48,6 +48,7 @@
 
   $ ../bin/interpret.exe  manytests/typed/007order.ml
   Running... 
+  val _start : unit -> unit -> int -> unit -> int -> int -> unit -> int -> int -> int
   val main : unit
 
   $ ../bin/interpret.exe  manytests/typed/008ascription.ml
@@ -61,6 +62,13 @@
 
   $ ../bin/interpret.exe manytests/typed/010sukharev.ml
   Running... 
+  val _1 : int -> int -> int * 'a -> bool
+  val _2 : int
+  val _3 : (int * string) option
+  val _4 : int -> 'a
+  val _42 : int -> bool
+  val _5 : int
+  val _6 : 'a option -> 'a
   val id1 : 'a -> 'a
   val id2 : 'b -> 'b
   val int_of_option : int option -> int

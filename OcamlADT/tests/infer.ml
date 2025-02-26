@@ -348,8 +348,10 @@ let%expect_test "007" =
 
 let main =
   print_int (_start (print_int 1) (print_int 2) 3 (print_int 4) 100 1000 (print_int (-1)) 10000 (-555555));;|};
-  [%expect {|
-      val main : unit |}]
+  [%expect
+    {|
+    val _start : unit -> unit -> int -> unit -> int -> int -> unit -> int -> int -> int
+    val main : unit |}]
 ;;
 
 (*PASSED*)
@@ -362,8 +364,8 @@ let main =
   0;;|};
   [%expect
     {|
-      val addi : ('a -> bool -> int) -> ('a -> bool) -> 'a -> int
-      val main : int |}]
+    val addi : ('a -> bool -> int) -> ('a -> bool) -> 'a -> int
+    val main : int |}]
 ;;
 
 (*PASSED*)
