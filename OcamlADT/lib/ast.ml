@@ -198,7 +198,7 @@ module Structure = struct
           when [rec] is [Nonrecursive],
         - [let rec P1 = E1 and ... and Pn = EN ]
           when [rec] is [Recursiv e ee]. *)
-    | Str_adt of ident list * ident * (ident * TypeExpr.t list) List1.t
+    | Str_adt of ident list * ident * (ident * TypeExpr.t option) List1.t
     (** [Str_type(C0, [(C1, [(T11; T12; ... ; T1n_1)]); (C2, [(T21;T22; ... ; T2n_2)]); ... ;
       (Cm, [(Tm1;Tm2; ... ; Tmn_n)]) ])] represents:
 
@@ -227,12 +227,9 @@ module Structure = struct
       ; ( 1
         , let* tparam = small_list (gen_ident_lc true) in
           let* idt = gen_ident_lc true in
-          let* cons1 =
-            Gen.pair (gen_ident_lc true) (small_list (TypeExpr.gen_sized (n / 20)))
-          in
+          let* cons1 = Gen.pair gen_ident_uc (Gen.option (TypeExpr.gen_sized (n / 20))) in
           let* consl =
-            small_list
-              (Gen.pair (gen_ident_lc true) (small_list (TypeExpr.gen_sized (n / 20))))
+            small_list (Gen.pair gen_ident_uc (Gen.option (TypeExpr.gen_sized (n / 20))))
           in
           return (Str_adt (tparam, idt, (cons1, consl))) )
       ]
@@ -242,5 +239,5 @@ end
 type program = Structure.structure_item list [@@deriving eq, show { with_path = false }]
 
 module Program = struct
-  let gen_program n = list_size (int_bound 0) (Structure.gen_structure_item (n / 2))
+  let gen_program n = list_size (int_bound 6) (Structure.gen_structure_item (n / 2))
 end

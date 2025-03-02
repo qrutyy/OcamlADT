@@ -8,7 +8,7 @@ open Ocamladt_lib.Interpreter
 open Ocamladt_lib.Interpreter.PPrinter
 open Ocamladt_lib.Infer
 open Ocamladt_lib.InferTypes
-open Angstrom
+open Format
 
 (* ------------------------------- *)
 (*       Command-line Options      *)
@@ -16,7 +16,6 @@ open Angstrom
 
 type options =
   { mutable show_ast : bool
-  ; mutable run_typecheck : bool
   ; mutable file_string : string option
   }
 
@@ -27,7 +26,6 @@ let usage_msg =
    Usage (repl mode): dune exec ./bin/interpret.exe <options>\n\n\
    Options:\n\
    --ast        Dump abstract syntax tree of a program\n\
-   --typecheck  Typecheck the program and print result\n\n\
    REPL commands:\n\
    help         Display usage message\n\
    quit         Quit the REPL mode\n"
@@ -38,18 +36,6 @@ let usage_msg =
 (* ------------------------------- *)
 
 (* A helper that parses a fixed word (like "help" or "quit") with surrounding whitespace. *)
-let parse_word word =
-  let ws = skip_while Base.Char.is_whitespace in
-  ws *> string word *> ws
-;;
-
-let parse_file filename =
-  let ic = open_in filename in
-  let len = in_channel_length ic in
-  let content = really_input_string ic len in
-  close_in ic;
-  parse_str content
-;;
 
 let rec read_repl_input inp_chan =
   match In_channel.input_line inp_chan with
@@ -82,26 +68,27 @@ let process_input options ast =
     print_endline "\nAST dump:";
     print_endline (show_program ast);
     print_newline ());
-  let typecheck_result =
-    match run_infer_program ast env_with_print_funs with
-    | Ok _ -> "passed"
-    | Error err -> "error - " ^ Format.asprintf "%a" pp_inf_err err
-  in
-  if options.run_typecheck then print_endline ("Typecheck: " ^ typecheck_result);
-  (match typecheck_result with
-   | "passed" ->
-     (match run_interpreter ast with
-      | Ok olist ->
-        List.iter
-          (fun (tag, v) ->
-            match tag with
-            | Some id -> Format.printf "val %s = %a\n" id PPrinter.pp_value v
-            | None -> if v <> VString "" then Format.printf "_ = %a\n" PPrinter.pp_value v)
-          olist
-      | Error e -> pp_error Format.std_formatter e)
-   | _ -> if options.run_typecheck then print_endline ("Typecheck: " ^ typecheck_result));
-  flush stdout;
-  Format.pp_print_flush Format.std_formatter ()
+  let tcr = run_infer_program ast env_with_things in
+  match tcr with
+  | Error err -> Format.printf "Type error: %a\n" pp_inf_err err
+  | Ok (env, _) ->
+    (match run_interpreter ast with
+     | Error e -> pp_error Format.std_formatter e
+     | Ok olist ->
+       List.iter
+         (fun (tag, v) ->
+           match tag with
+           | Some id ->
+             (match Base.Map.find env id with
+              | Some (Forall (args, typ)) ->
+                let m, _, _ = minimize (binder_to_list args) in
+                let type_str = Format.asprintf "%a" (pprint_type ~poly_names_map:m) typ in
+                Format.printf "val %s : %s = %a\n" id type_str PPrinter.pp_value v
+              | None -> Format.printf "val %s = %a\n" id PPrinter.pp_value v)
+           | None -> if v <> VString "" then Format.printf "_ = %a\n" PPrinter.pp_value v)
+         olist);
+    flush stdout;
+    Format.pp_print_flush Format.std_formatter ()
 ;;
 
 let run_repl options =
@@ -127,12 +114,8 @@ let run_file options string =
 (* ------------------------------- *)
 
 let () =
-  let options = { show_ast = false; run_typecheck = false; file_string = None } in
-  let arg_list =
-    [ "--ast", Arg.Unit (fun () -> options.show_ast <- true), "Dump AST"
-    ; "--typecheck", Arg.Unit (fun () -> options.run_typecheck <- true), "Run typecheck"
-    ]
-  in
+  let options = { show_ast = false; file_string = None } in
+  let arg_list = [ "--ast", Arg.Unit (fun () -> options.show_ast <- true), "Dump AST" ] in
   let read_file path =
     if Sys.file_exists path
     then (

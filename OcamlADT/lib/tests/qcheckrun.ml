@@ -12,19 +12,19 @@ let arbitrary =
   QCheck.make
     ~print:(fun p -> asprintf "%a" pp_program p)
     (*    ~shrink:Shrinker.ShrinkQCheck.shrink_structure *)
-    (Program.gen_program 0)
+    (Program.gen_program 20)
 ;;
 
 let test_round_trip2 =
   QCheck.Test.make
     ~name:"round-trip parsing and pretty printing"
-    ~count:0
+    ~count:10
     arbitrary
     (fun program ->
        let program_ast = show_program program in
        if String.equal program_ast "[]"
        then (
-         printf "Generated empty AST. Skipping... \n";
+         printf "";
          true)
        else (
          let printed_program = asprintf "%a" pprint_program program in
