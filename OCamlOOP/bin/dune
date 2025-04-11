@@ -1,6 +1,0 @@
-(executable
- (public_name OCamlOOP)
- (name main)
- (libraries ocaml_oop_lib)
- (instrumentation
-  (backend bisect_ppx)))

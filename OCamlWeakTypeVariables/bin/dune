@@ -1,7 +1,0 @@
-(executable
- (name REPL)
- (public_name REPL)
- (libraries lib))
-
-(cram
- (deps ./REPL.exe %{bin:REPL}))

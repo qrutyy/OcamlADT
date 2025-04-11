@@ -1,3 +1,0 @@
-forward mutability_check ignore REPL.ml
-forward physical_equality ignore lib/eval.ml
-

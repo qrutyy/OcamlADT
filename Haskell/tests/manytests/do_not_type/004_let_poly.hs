@@ -1,1 +1,0 @@
-temp = (\f -> (f 1, f True)) (\x -> x)

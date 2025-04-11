@@ -1,5 +1,0 @@
-(library
- (name typecheck)
- (libraries base ast baseMonad ppType)
- (instrumentation
-  (backend bisect_ppx)))

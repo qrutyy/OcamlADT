@@ -1,6 +1,0 @@
-(library
- (name inference)
- (public_name FSharpUnitsOfMeasure.Inference)
- (libraries base ast pprint)
- (instrumentation
-  (backend bisect_ppx)))

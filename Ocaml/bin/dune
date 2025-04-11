@@ -1,8 +1,0 @@
-(executable
- (name demo)
- (modules demo)
- (public_name demoInterpret)
- (libraries ocaml_lib stdio))
-
-(cram
- (deps ./demo.exe))

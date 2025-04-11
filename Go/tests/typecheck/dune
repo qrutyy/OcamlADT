@@ -1,8 +1,0 @@
-(library
- (name typecheckUnitTest)
- (libraries parse typecheck errors)
- (inline_tests)
- (instrumentation
-  (backend bisect_ppx))
- (preprocess
-  (pps ppx_expect)))

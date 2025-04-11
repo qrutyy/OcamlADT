@@ -1,5 +1,0 @@
-(library
- (name ppType)
- (libraries ast)
- (instrumentation
-  (backend bisect_ppx)))

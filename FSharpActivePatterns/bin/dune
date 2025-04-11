@@ -1,6 +1,0 @@
-(executable
- (public_name repl)
- (name REPL)
- (libraries FSharpActivePatterns stdlib str)
- (instrumentation
-  (backend bisect_ppx)))
